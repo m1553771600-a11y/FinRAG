@@ -1,6 +1,6 @@
-# finrag
+# FinSage（金融智者）
 
-领域无关的**金融 RAG** 库。从 `ClipAgent_Pro` 抽取而来，剥离了全部剪辑领域知识（prompts / 关键词 / 分类器），RAG 核心保持领域无关，并内置一个金融领域 profile。
+面向金融领域的 RAG 智能问答库。先检索可信资料，再让大模型基于检索结果作答并标注出处，把「能回答」升级成「答得准、有出处」。
 
 - **检索**：BGE-M3 双向量（dense + sparse）→ Milvus Hybrid 检索（WeightedRanker）→ BGE-Reranker 精排
 - **入库**：文档加载 / 分块 / 嵌入 / 写入，支持 Contextual RAG
@@ -8,19 +8,21 @@
 - **意图分类**：QueryClassifier 二分类（可选，支持微调）
 - **设计约束**：库内部**绝不**读全局变量、环境变量或任何隐式配置；外部依赖（embedding / 重排 / 向量库 / LLM / Web 搜索）全部通过 Protocol 注入，可整体替换
 
+> Python 包名：`finrag`，导入方式 `import finrag`。
+
 ## 安装
 
 ```bash
 # 最小安装（仅向量库）
 pip install -e D:\RAG
 
-# 金融 RAG 全家桶（等价旧项目的 RAG 相关依赖）
+# 金融 RAG 全家桶
 pip install -e "D:\RAG[all]"
 ```
 
 可选 extras：`embedding` / `reranker` / `llm` / `ingest` / `classifier` / `web` / `all`。
 
-## 配置（自包含，不依赖任何外部项目）
+## 配置（自包含）
 
 库自身不读环境变量。示例/应用通过 `load_config()` **显式**加载配置：
 
@@ -37,7 +39,7 @@ retriever = Retriever(cfg)
 docs, confidence = retriever.retrieve("什么是市盈率？", tenant_id="tenant_default")
 ```
 
-`.env` 支持 `FINRAG_*` 键（兼容旧项目 `MILVUS_*` / `DEEPSEEK_*` / `BGE_M3_MODEL_PATH` 等键）：
+`.env` 使用 `FINRAG_*` 键：
 
 ```ini
 FINRAG_MILVUS_URI=http://localhost:19530
@@ -126,7 +128,7 @@ gen = AnswerGenerator(llm, web_search=DuckDuckGoSearch())
 answer = await gen.answer("最新 CPI 是多少？", [])   # 自动联网，mode="web_augmented"
 ```
 
-## 意图分类器微调（金融）
+## 意图分类器微调
 
 ```bash
 python examples/train_finance_classifier.py \
@@ -148,9 +150,9 @@ python examples/train_finance_classifier.py \
 | 文档不存在 / 类型不支持 | 抛 `FileNotFoundError` / `ValueError` |
 | 入库空列表 | 返回 `0` |
 
-## 领域与剪辑知识剥离
+## 领域定制
 
-库核心（`retriever` / `ingestor` / `embedder` / `reranker` / `vector_store` / `answer`）**不含任何领域词**。剪辑领域的 prompts / 关键词 / 分类训练数据均已移除；金融领域内容集中在 `finrag/domains/finance.py`（系统/RAG/HyDE/MultiQuery prompt + 金融关键词 + 阈值），作为默认领域，可通过 `AnswerGenerator` 的 `system_prompt` / `rag_prompt_template` / `direct_prompt_template` 参数整体替换。
+库核心（`retriever` / `ingestor` / `embedder` / `reranker` / `vector_store` / `answer`）**不含任何领域词**。默认领域内容集中在 `finrag/domains/finance.py`（系统/RAG/HyDE/MultiQuery prompt + 金融关键词 + 阈值），可通过 `AnswerGenerator` 的 `system_prompt` / `rag_prompt_template` / `direct_prompt_template` 参数整体替换，或新增自己的领域模块。
 
 ## 版本
 
